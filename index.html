@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Intranet ESBVA V9</title>
+<style>
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fa}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+.header{background:linear-gradient(135deg,#FF6B35,#004E89);color:#fff;padding:15px 20px;display:flex;align-items:center;gap:15px;flex-wrap:wrap}
+.header h1{font-size:20px;margin:0;flex:1}
+.nav-btn{border:none;background:rgba(255,255,255,.15);color:#fff;padding:6px 12px;border-radius:20px;cursor:pointer;font-size:13px;transition:.2s}
+.nav-btn:hover{background:rgba(255,255,255,.25)}
+.nav-btn.active{background:rgba(255,255,255,.3)}
+.user-info{margin-left:auto;font-size:13px}
+.badge{padding:2px 8px;border-radius:999px;font-size:11px;margin-left:4px}
+.badge-admin{background:#dc3545}
+.badge-coach{background:#17a2b8}
+.main{margin-top:16px}
+.section{display:none;background:#fff;border-radius:10px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.section.active{display:block}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:12px}
+.card{border-radius:8px;padding:12px;border-left:4px solid #FF6B35;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.card h3{margin:0 0 6px;color:#004E89;font-size:16px}
+.card p{margin:0 0 6px;font-size:13px;color:#555;line-height:1.4}
+.card-img{width:100%;height:120px;object-fit:cover;border-radius:6px;margin-top:8px;cursor:pointer}
+.card-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.btn{border:none;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;transition:.2s}
+.btn:hover{opacity:.85}
+.btn-add{background:#FF6B35;color:#fff;display:block;width:100%;margin-top:8px;padding:8px}
+.btn-edit{background:#28a745;color:#fff}
+.btn-del{background:#dc3545;color:#fff}
+.btn-promote{background:#004E89;color:#fff}
+.btn-sm{padding:4px 8px;font-size:11px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+input,select,textarea{font-size:13px;padding:8px;border-radius:6px;border:1px solid #ccc;font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#FF6B35;box-shadow:0 0 3px rgba(255,107,53,.3)}
+textarea{width:100%;resize:vertical;min-height:80px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1000;overflow:auto}
+.modal.active{display:flex}
+.modal-content{background:#fff;border-radius:10px;padding:20px;max-width:500px;width:90%;margin:20px auto}
+.modal h3{margin-top:0;color:#004E89}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+.file-input-wrap{margin:8px 0}
+.file-input-wrap label{display:block;font-size:12px;margin-bottom:4px;font-weight:600}
+.file-input-wrap input{width:100%;box-sizing:border-box}
+.preview-img{max-width:100%;max-height:200px;border-radius:6px;margin-top:8px}
+.notification{position:fixed;right:16px;top:80px;padding:10px 14px;border-radius:6px;font-size:13px;color:#fff;opacity:0;transform:translateX(400px);transition:.2s;z-index:1100}
+.notification.show{opacity:1;transform:translateX(0)}
+.notification.success{background:#28a745}
+.notification.error{background:#dc3545}
+.notification.warning{background:#ff9800}
+.storage-warning{background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:10px;margin-bottom:12px;font-size:12px;color:#856404}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center}
+.login-box{background:#fff;border-radius:10px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.1);width:340px}
+.login-box h2{text-align:center;margin-top:0;margin-bottom:12px;color:#004E89}
+.small{font-size:12px;color:#666}
+.table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.table th,.table td{border-bottom:1px solid #eee;padding:6px;text-align:left}
+.table th{background:#f7f7f7;font-weight:600}
+.admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+hr{border:none;border-top:1px solid #eee;margin:12px 0}
+@media(max-width:600px){.header{gap:8px}.nav-btn{padding:4px 8px;font-size:11px}.card{padding:8px}.modal-content{padding:12px}}
+</style>
+</head>
+<body>
+<div id="notif" class="notification"></div>
+
+<!-- Login -->
+<div id="loginView" class="login-wrap">
+  <div class="login-box">
+    <h2>Intranet ESBVA V9</h2>
+    <p class="small">Connexion</p>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Email</label>
+      <input id="loginEmail" type="email" style="width:100%;box-sizing:border-box" />
+    </div>
+    <div style="margin-bottom:12px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Mot de passe</label>
+      <input id="loginPassword" type="password" style="width:100%;box-sizing:border-box" />
+    </div>
+    <button class="btn" style="background:#FF6B35;color:#fff;width:100%;padding:8px" onclick="handleLogin()">Se connecter</button>
+    <p class="small" style="margin-top:12px"><strong>Comptes démo :</strong><br/>admin@esbva.fr / admin123<br/>coach@esbva.fr / coach123</p>
+    <hr/>
+    <p class="small"><strong>Inscription coach</strong></p>
+    <div style="margin-bottom:6px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Nom complet</label>
+      <input id="regName" style="width:100%;box-sizing:border-box" />
+    </div>
+    <div style="margin-bottom:6px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Email</label>
+      <input id="regEmail" type="email" style="width:100%;box-sizing:border-box" />
+    </div>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Mot de passe</label>
+      <input id="regPassword" type="password" style="width:100%;box-sizing:border-box" />
+    </div>
+    <button class="btn" style="background:#004E89;color:#fff;width:100%;padding:8px" onclick="handleRegister()">Demander un compte</button>
+  </div>
+</div>
+
+<!-- App -->
+<div id="appView" style="display:none">
+<header class="header">
+  <h1>Intranet ESBVA V9</h1>
+  <button class="nav-btn active" onclick="showSection('home',event)">Accueil</button>
+  <button class="nav-btn" onclick="showSection('miniGuerrier',event)">Mini guerrière</button>
+  <button class="nav-btn" onclick="showSection('miniHeron',event)">Mini Héron</button>
+  <button class="nav-btn" onclick="showSection('projetsSportif',event)">Projets sportif</button>
+  <button class="nav-btn" onclick="showSection('exercices',event)">Exercices</button>
+  <button class="nav-btn" onclick="showSection('lexique',event)">Lexique</button>
+  <button class="nav-btn" onclick="showSection('infra',event)">Infrastructures</button>
+  <button class="nav-btn" onclick="showSection('conventions',event)">Conventions</button>
+  <button class="nav-btn" onclick="showSection('contacts',event)">Contacts</button>
+  <button class="nav-btn" onclick="showSection('weekends',event)">Organisation des Week ends</button>
+  <button class="nav-btn" id="adminTab" onclick="showSection('admin',event)">Admin</button>
+  <div class="user-info" id="userInfo"></div>
+  <button class="nav-btn" style="background:rgba(255,107,53,.5)" onclick="logout()">Déconnexion</button>
+</header>
+<div class="container main">
+  <section id="home" class="section active">
+    <h2>Bienvenue sur l'intranet ESBVA V9</h2>
+    <p>Gestion complète des ressources du club de basket avec images et documents</p>
+    <div class="cards">
+      <div class="card"><h3>👶 Mini guerrière</h3><p>Matchs, résultats, photos</p></div>
+      <div class="card"><h3>🦢 Mini héron</h3><p>Matchs, résultats, photos</p></div>
+      <div class="card"><h3>🏀 Projets sportif</h3><p>Projets en cours</p></div>
+      <div class="card"><h3>💪 Exercices</h3><p>Exercices + images/docs</p></div>
+      <div class="card"><h3>📚 Lexique</h3><p>Vocabulaire + attachements</p></div>
+      <div class="card"><h3>🏢 Infrastructures</h3><p>Salles avec documents</p></div>
+      <div class="card"><h3>📋 Conventions</h3><p>Documents officiels</p></div>
+      <div class="card"><h3>👥 Contacts</h3><p>Annuaire interne</p></div>
+      <div class="card"><h3>📅 Organisation Week ends</h3><p>Planning des week ends</p></div>
+    </div>
+  </section>
+
+  <section id="miniGuerrier" class="section">
+    <h2>👶 Mini Guerrière</h2>
+    <button id="btnAddMiniG" class="btn-add" onclick="openMiniGModal()">➕ Ajouter un élément</button>
+    <div id="miniGList" class="cards"></div>
+  </section>
+
+  <section id="miniHeron" class="section">
+    <h2>🦢 Mini Héron</h2>
+    <button id="btnAddMiniH" class="btn-add" onclick="openMiniHModal()">➕ Ajouter un élément</button>
+    <div id="miniHList" class="cards"></div>
+  </section>
+
+  <section id="projetsSportif" class="section">
+    <h2>🏀 Projets sportif</h2>
+    <button id="btnAddProjets" class="btn-add" onclick="openProjetsModal()">➕ Ajouter un projet</button>
+    <div id="projetsList" class="cards"></div>
+  </section>
+
+  <section id="exercices" class="section">
+    <h2>💪 Exercices</h2>
+    <div id="storageWarning"></div>
+    <div class="filters">
+      <input id="exoSearch" placeholder="Rechercher..." oninput="renderExercices()" style="flex:1" />
+      <select id="exoThemeFilter" onchange="renderExercices()"></select>
+    </div>
+    <button id="btnAddExo" class="btn-add" onclick="openExoModal()">➕ Ajouter un exercice</button>
+    <div id="exoList" class="cards"></div>
+  </section>
+
+  <section id="lexique" class="section">
+    <h2>📚 Lexique</h2>
+    <input id="lexSearch" placeholder="Rechercher..." oninput="renderLexique()" />
+    <button id="btnAddLex" class="btn-add" onclick="openLexModal()">➕ Ajouter un terme</button>
+    <div id="lexList" class="cards"></div>
+  </section>
+
+  <section id="infra" class="section">
+    <h2>🏢 Infrastructures</h2>
+    <button id="btnAddInfra" class="btn-add" onclick="openInfraModal()">➕ Ajouter une salle</button>
+    <div id="infraList" class="cards"></div>
+  </section>
+
+  <section id="conventions" class="section">
+    <h2>📋 Conventions & Documents</h2>
+    <button id="btnAddConv" class="btn-add" onclick="openConvModal()">➕ Ajouter une convention</button>
+    <div id="convList" class="cards"></div>
+  </section>
+
+  <section id="contacts" class="section">
+    <h2>👥 Contacts Utiles</h2>
+    <button id="btnAddContact" class="btn-add" onclick="openContactModal()">➕ Ajouter un contact</button>
+    <div id="contactList" class="cards"></div>
+  </section>
+
+  <section id="weekends" class="section">
+    <h2>📅 Organisation des Week ends</h2>
+    <button id="btnAddWeekend" class="btn-add" onclick="openWeekendsModal()">➕ Ajouter un week end</button>
+    <div id="weekendsList" class="cards"></div>
+  </section>
+
+  <section id="admin" class="section">
+    <h2>⚙️ Administration</h2>
+    <div class="admin-grid">
+      <div>
+        <h3 style="margin-top:0">Inscriptions en attente</h3>
+        <table class="table" id="pendingTable"></table>
+      </div>
+      <div>
+        <h3 style="margin-top:0">Utilisateurs</h3>
+        <table class="table" id="usersTable"></table>
+      </div>
+    </div>
+  </section>
+</div>
+</div>
+
+<!-- Modals -->
+<div id="miniGModal" class="modal">
+  <div class="modal-content">
+    <h3>Mini Guerrière - Ajouter un élément</h3>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Titre (ex: Match vs Équipe X)</label>
+      <input id="miniGTitle" style="width:100%;box-sizing:border-box" />
+    </div>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Description</label>
+      <textarea id="miniGDesc"></textarea>
+    </div>
+    <div class="file-input-wrap">
+      <label>Image ou PDF (optionnel)</label>
+      <input id="miniGFile" type="file" accept="image/*,.pdf" />
+      <div id="miniGFilePreview"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('miniGModal')">Annuler</button>
+      <button class="btn" style="background:#FF6B35;color:#fff" onclick="saveMiniGItem()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="miniHModal" class="modal">
+  <div class="modal-content">
+    <h3>Mini Héron - Ajouter un élément</h3>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Titre (ex: Match vs Équipe X)</label>
+      <input id="miniHTitle" style="width:100%;box-sizing:border-box" />
+    </div>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Description</label>
+      <textarea id="miniHDesc"></textarea>
+    </div>
+    <div class="file-input-wrap">
+      <label>Image ou PDF (optionnel)</label>
+      <input id="miniHFile" type="file" accept="image/*,.pdf" />
+      <div id="miniHFilePreview"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('miniHModal')">Annuler</button>
+      <button class="btn" style="background:#FF6B35;color:#fff" onclick="saveMiniHItem()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="projetsModal" class="modal">
+  <div class="modal-content">
+    <h3>Projets sportif - Ajouter un projet</h3>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Titre</label>
+      <input id="projetsTitle" style="width:100%;box-sizing:border-box" />
+    </div>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Description</label>
+      <textarea id="projetsDesc"></textarea>
+    </div>
+    <div class="file-input-wrap">
+      <label>Image ou PDF (optionnel)</label>
+      <input id="projetsFile" type="file" accept="image/*,.pdf" />
+      <div id="projetsFilePreview"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('projetsModal')">Annuler</button>
+      <button class="btn" style="background:#FF6B35;color:#fff" onclick="saveProjetsItem()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="exoModal" class="modal">
+  <div class="modal-content">
+    <h3>Exercice</h3>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Nom</label>
+      <input id="exoName" style="width:100%;box-sizing:border-box" />
+    </div>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Thème</label>
+      <input id="exoTheme" style="width:100%;box-sizing:border-box" />
+    </div>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Description</label>
+      <textarea id="exoDesc"></textarea>
+    </div>
+    <div class="file-input-wrap">
+      <label>Image ou PDF (optionnel)</label>
+      <input id="exoFile" type="file" accept="image/*,.pdf" />
+      <div id="exoFilePreview"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('exoModal')">Annuler</button>
+      <button class="btn" style="background:#FF6B35;color:#fff" onclick="saveExo()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="lexModal" class="modal">
+  <div class="modal-content">
+    <h3>Terme lexique</h3>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Terme</label>
+      <input id="lexTerm" style="width:100%;box-sizing:border-box" />
+    </div>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Définition</label>
+      <textarea id="lexDef"></textarea>
+    </div>
+    <div class="file-input-wrap">
+      <label>Image ou PDF (optionnel)</label>
+      <input id="lexFile" type="file" accept="image/*,.pdf" />
+      <div id="lexFilePreview"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('lexModal')">Annuler</button>
+      <button class="btn" style="background:#FF6B35;color:#fff" onclick="saveLex()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="convModal" class="modal">
+  <div class="modal-content">
+    <h3>Convention</h3>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Titre</label>
+      <input id="convTitle" style="width:100%;box-sizing:border-box" />
+    </div>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Contenu</label>
+      <textarea id="convContent"></textarea>
+    </div>
+    <div class="file-input-wrap">
+      <label>Image ou PDF (optionnel)</label>
+      <input id="convFile" type="file" accept="image/*,.pdf" />
+      <div id="convFilePreview"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('convModal')">Annuler</button>
+      <button class="btn" style="background:#FF6B35;color:#fff" onclick="saveConv()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="contactModal" class="modal">
+  <div class="modal-content">
+    <h3>Contact utile</h3>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Nom</label>
+      <input id="contactName" style="width:100%;box-sizing:border-box" />
+    </div>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Fonction</label>
+      <input id="contactRole" style="width:100%;box-sizing:border-box" />
+    </div>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Contact (email/tél)</label>
+      <input id="contactInfo" style="width:100%;box-sizing:border-box" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('contactModal')">Annuler</button>
+      <button class="btn" style="background:#FF6B35;color:#fff" onclick="saveContact()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="weekendsModal" class="modal">
+  <div class="modal-content">
+    <h3>Organisation Week end - Ajouter un élément</h3>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Titre (ex: Week end du 15-16 décembre)</label>
+      <input id="weekendsTitle" style="width:100%;box-sizing:border-box" />
+    </div>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Description</label>
+      <textarea id="weekendsDesc"></textarea>
+    </div>
+    <div class="file-input-wrap">
+      <label>Image ou PDF (optionnel)</label>
+      <input id="weekendsFile" type="file" accept="image/*,.pdf" />
+      <div id="weekendsFilePreview"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('weekendsModal')">Annuler</button>
+      <button class="btn" style="background:#FF6B35;color:#fff" onclick="saveWeekendsItem()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="infraModal" class="modal">
+  <div class="modal-content">
+    <h3>Infrastructure</h3>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Nom de la salle</label>
+      <input id="infraName" style="width:100%;box-sizing:border-box" />
+    </div>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Description/Fonctionnement</label>
+      <textarea id="infraDesc"></textarea>
+    </div>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Matériel disponible</label>
+      <textarea id="infraEquip"></textarea>
+    </div>
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:12px;margin-bottom:2px">Code de clé / Accès</label>
+      <input id="infraCode" style="width:100%;box-sizing:border-box" />
+    </div>
+    <div class="file-input-wrap">
+      <label>Image ou PDF (optionnel)</label>
+      <input id="infraFile" type="file" accept="image/*,.pdf" />
+      <div id="infraFilePreview"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('infraModal')">Annuler</button>
+      <button class="btn" style="background:#FF6B35;color:#fff" onclick="saveInfra()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const LS_KEYS={USERS:'esbva_users',PENDING:'esbva_pending',EXO:'esbva_exos',LEX:'esbva_lex',CONV:'esbva_conv',CONTACT:'esbva_contact',MINIG:'esbva_minig',MINIH:'esbva_minih',PROJETS:'esbva_projets',INFRA:'esbva_infra',WEEKENDS:'esbva_weekends'};
+const MAX_FILE_SIZE=2*1024*1024;
+let currentUser=null;
+let editingId=null;
+let currentFile=null;
+
+function getStorageSize(){let s=0;for(let k in localStorage)s+=localStorage[k].length;return s;}
+function checkStorageWarning(){const s=getStorageSize(),limit=5*1024*1024,pct=Math.round(s/limit*100);if(pct>70){const w=document.getElementById('storageWarning');if(w)w.innerHTML='<div class="storage-warning">⚠️ Stockage '+pct+'% utilisé. Limite approchante.</div>';}else{const w=document.getElementById('storageWarning');if(w)w.innerHTML='';}
+}
+
+function loadData(){
+  let users=JSON.parse(localStorage.getItem(LS_KEYS.USERS)||'null');
+  if(!users){users=[{id:1,name:'Admin ESBVA',email:'admin@esbva.fr',password:'admin123',role:'admin'},{id:2,name:'Coach Démo',email:'coach@esbva.fr',password:'coach123',role:'coach'}];localStorage.setItem(LS_KEYS.USERS,JSON.stringify(users));}
+  if(!localStorage.getItem(LS_KEYS.PENDING))localStorage.setItem(LS_KEYS.PENDING,'[]');
+  if(!localStorage.getItem(LS_KEYS.EXO))localStorage.setItem(LS_KEYS.EXO,JSON.stringify([{id:1,name:'Dribble en slalom',theme:'Dribble',desc:'Parcours entre plots avec dribbles alternés.',file:null}]));
+  if(!localStorage.getItem(LS_KEYS.LEX))localStorage.setItem(LS_KEYS.LEX,JSON.stringify([{id:1,term:'Pick and roll',def:'Écran puis déplacement vers le panier.',file:null}]));
+  if(!localStorage.getItem(LS_KEYS.CONV))localStorage.setItem(LS_KEYS.CONV,'[]');
+  if(!localStorage.getItem(LS_KEYS.CONTACT))localStorage.setItem(LS_KEYS.CONTACT,'[]');
+  if(!localStorage.getItem(LS_KEYS.MINIG))localStorage.setItem(LS_KEYS.MINIG,'[]');
+  if(!localStorage.getItem(LS_KEYS.MINIH))localStorage.setItem(LS_KEYS.MINIH,'[]');
+  if(!localStorage.getItem(LS_KEYS.PROJETS))localStorage.setItem(LS_KEYS.PROJETS,'[]');
+  if(!localStorage.getItem(LS_KEYS.INFRA))localStorage.setItem(LS_KEYS.INFRA,'[]');
+  if(!localStorage.getItem(LS_KEYS.WEEKENDS))localStorage.setItem(LS_KEYS.WEEKENDS,'[]');
+}
+
+function getUsers(){return JSON.parse(localStorage.getItem(LS_KEYS.USERS)||'[]');}
+function setUsers(u){localStorage.setItem(LS_KEYS.USERS,JSON.stringify(u));}
+function getPending(){return JSON.parse(localStorage.getItem(LS_KEYS.PENDING)||'[]');}
+function setPending(p){localStorage.setItem(LS_KEYS.PENDING,JSON.stringify(p));}
+function getExos(){return JSON.parse(localStorage.getItem(LS_KEYS.EXO)||'[]');}
+function setExos(e){localStorage.setItem(LS_KEYS.EXO,JSON.stringify(e));checkStorageWarning();}
+function getLex(){return JSON.parse(localStorage.getItem(LS_KEYS.LEX)||'[]');}
+function setLex(l){localStorage.setItem(LS_KEYS.LEX,JSON.stringify(l));checkStorageWarning();}
+function getConv(){return JSON.parse(localStorage.getItem(LS_KEYS.CONV)||'[]');}
+function setConv(c){localStorage.setItem(LS_KEYS.CONV,JSON.stringify(c));checkStorageWarning();}
+function getContact(){return JSON.parse(localStorage.getItem(LS_KEYS.CONTACT)||'[]');}
+function setContact(c){localStorage.setItem(LS_KEYS.CONTACT,JSON.stringify(c));}
+function getMiniG(){return JSON.parse(localStorage.getItem(LS_KEYS.MINIG)||'[]');}
+function setMiniG(m){localStorage.setItem(LS_KEYS.MINIG,JSON.stringify(m));checkStorageWarning();}
+function getMiniH(){return JSON.parse(localStorage.getItem(LS_KEYS.MINIH)||'[]');}
+function setMiniH(m){localStorage.setItem(LS_KEYS.MINIH,JSON.stringify(m));checkStorageWarning();}
+function getProjets(){return JSON.parse(localStorage.getItem(LS_KEYS.PROJETS)||'[]');}
+function setProjets(p){localStorage.setItem(LS_KEYS.PROJETS,JSON.stringify(p));checkStorageWarning();}
+function getInfra(){return JSON.parse(localStorage.getItem(LS_KEYS.INFRA)||'[]');}
+function setInfra(i){localStorage.setItem(LS_KEYS.INFRA,JSON.stringify(i));checkStorageWarning();}
+function getWeekends(){return JSON.parse(localStorage.getItem(LS_KEYS.WEEKENDS)||'[]');}
+function setWeekends(w){localStorage.setItem(LS_KEYS.WEEKENDS,JSON.stringify(w));checkStorageWarning();}
+
+function notify(msg,type='success'){const el=document.getElementById('notif');el.textContent=msg;el.className='notification '+type;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
+
+function handleFileInput(e,previewId){const file=e.target.files[0];if(!file){currentFile=null;return;}if(file.size>MAX_FILE_SIZE){notify('Fichier trop volumineux (max 2 MB)','error');e.target.value='';return;}const reader=new FileReader();reader.onload=()=>{currentFile={data:reader.result,type:file.type,name:file.name};const preview=document.getElementById(previewId);if(file.type.startsWith('image')){preview.innerHTML='<img src="'+reader.result+'" class="preview-img" style="max-width:100%;max-height:100px">';}else if(file.type==='application/pdf'){preview.innerHTML='<p style="font-size:11px">📄 '+file.name+' (PDF)</p>';}};reader.readAsDataURL(file);}
+
+function handleLogin(){const email=document.getElementById('loginEmail').value.trim();const pwd=document.getElementById('loginPassword').value.trim();const user=getUsers().find(u=>u.email===email&&u.password===pwd);if(!user){notify('Identifiants incorrects','error');return;}currentUser=user;document.getElementById('loginView').style.display='none';document.getElementById('appView').style.display='block';document.getElementById('userInfo').innerHTML=user.name+' <span class="badge '+(user.role==='admin'?'badge-admin':'badge-coach')+'">'+user.role+'</span>';document.getElementById('adminTab').style.display=user.role==='admin'?'inline-block':'none';loadData();renderAll();checkStorageWarning();}
+
+function logout(){currentUser=null;document.getElementById('appView').style.display='none';document.getElementById('loginView').style.display='flex';}
+
+function handleRegister(){const name=document.getElementById('regName').value.trim();const email=document.getElementById('regEmail').value.trim();const pwd=document.getElementById('regPassword').value.trim();if(!name||!email||!pwd){notify('Tous les champs sont obligatoires','error');return;}const users=getUsers();if(users.find(u=>u.email===email)||getPending().find(p=>p.email===email)){notify('Email déjà utilisé ou en attente','error');return;}const pending=getPending();pending.push({id:Date.now(),name,email,password:pwd,role:'coach'});setPending(pending);notify('Demande envoyée, en attente de validation admin');document.getElementById('regName').value='';document.getElementById('regEmail').value='';document.getElementById('regPassword').value='';}
+
+function showSection(id,e){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));if(e&&e.target)e.target.classList.add('active');if(id==='admin')renderAdmin();if(id==='miniGuerrier')renderMiniG();if(id==='miniHeron')renderMiniH();if(id==='projetsSportif')renderProjets();if(id==='weekends')renderWeekends();checkStorageWarning();}
+
+function canEdit(){return currentUser&&(currentUser.role==='admin'||currentUser.role==='coach');}
+
+// Mini Guerrière
+function renderMiniG(){const list=document.getElementById('miniGList');const items=getMiniG();list.innerHTML='';items.forEach(item=>{const div=document.createElement('div');div.className='card';let content='<h3>'+item.title+'</h3><p>'+item.desc+'</p>';if(item.file){if(item.file.type.startsWith('image')){content+='<img src="'+item.file.data+'" class="card-img" />';}else{content+='<p style="font-size:11px">📄 PDF</p>';}}div.innerHTML=content;const actions=document.createElement('div');actions.className='card-actions';if(canEdit()){const be=document.createElement('button');be.className='btn btn-edit btn-sm';be.textContent='Modifier';be.onclick=()=>editMiniGItem(item);actions.appendChild(be);const bd=document.createElement('button');bd.className='btn btn-del btn-sm';bd.textContent='Supprimer';bd.onclick=()=>{if(confirm('Confirmer?')){setMiniG(getMiniG().filter(x=>x.id!==item.id));renderMiniG();notify('Supprimé');}};actions.appendChild(bd);}div.appendChild(actions);list.appendChild(div);});document.getElementById('btnAddMiniG').style.display=canEdit()?'block':'none';}
+function openMiniGModal(){editingId=null;currentFile=null;document.getElementById('miniGTitle').value='';document.getElementById('miniGDesc').value='';document.getElementById('miniGFile').value='';document.getElementById('miniGFilePreview').innerHTML='';document.getElementById('miniGFile').addEventListener('change',e=>handleFileInput(e,'miniGFilePreview'));document.getElementById('miniGModal').classList.add('active');}
+function editMiniGItem(item){editingId=item.id;currentFile=item.file||null;document.getElementById('miniGTitle').value=item.title;document.getElementById('miniGDesc').value=item.desc;document.getElementById('miniGFile').value='';const preview=document.getElementById('miniGFilePreview');preview.innerHTML='';if(currentFile){if(currentFile.type.startsWith('image')){preview.innerHTML='<img src="'+currentFile.data+'" class="preview-img" style="max-width:100%;max-height:100px">';}else{preview.innerHTML='<p style="font-size:11px">📄 '+currentFile.name+' (PDF)</p>';}}document.getElementById('miniGFile').addEventListener('change',e=>handleFileInput(e,'miniGFilePreview'));document.getElementById('miniGModal').classList.add('active');}
+function closeModal(id){document.getElementById(id).classList.remove('active');editingId=null;currentFile=null;}
+function saveMiniGItem(){const title=document.getElementById('miniGTitle').value.trim();const desc=document.getElementById('miniGDesc').value.trim();if(!title){notify('Titre obligatoire','error');return;}let items=getMiniG();if(editingId){items=items.map(i=>i.id==editingId?{id:i.id,title,desc,file:currentFile}:i);}else{items.push({id:Date.now(),title,desc,file:currentFile});}setMiniG(items);closeModal('miniGModal');renderMiniG();notify('Mini Guerrière mise à jour');}
+
+// Mini Héron
+function renderMiniH(){const list=document.getElementById('miniHList');const items=getMiniH();list.innerHTML='';items.forEach(item=>{const div=document.createElement('div');div.className='card';let content='<h3>'+item.title+'</h3><p>'+item.desc+'</p>';if(item.file){if(item.file.type.startsWith('image')){content+='<img src="'+item.file.data+'" class="card-img" />';}else{content+='<p style="font-size:11px">📄 PDF</p>';}}div.innerHTML=content;const actions=document.createElement('div');actions.className='card-actions';if(canEdit()){const be=document.createElement('button');be.className='btn btn-edit btn-sm';be.textContent='Modifier';be.onclick=()=>editMiniHItem(item);actions.appendChild(be);const bd=document.createElement('button');bd.className='btn btn-del btn-sm';bd.textContent='Supprimer';bd.onclick=()=>{if(confirm('Confirmer?')){setMiniH(getMiniH().filter(x=>x.id!==item.id));renderMiniH();notify('Supprimé');}};actions.appendChild(bd);}div.appendChild(actions);list.appendChild(div);});document.getElementById('btnAddMiniH').style.display=canEdit()?'block':'none';}
+function openMiniHModal(){editingId=null;currentFile=null;document.getElementById('miniHTitle').value='';document.getElementById('miniHDesc').value='';document.getElementById('miniHFile').value='';document.getElementById('miniHFilePreview').innerHTML='';document.getElementById('miniHFile').addEventListener('change',e=>handleFileInput(e,'miniHFilePreview'));document.getElementById('miniHModal').classList.add('active');}
+function editMiniHItem(item){editingId=item.id;currentFile=item.file||null;document.getElementById('miniHTitle').value=item.title;document.getElementById('miniHDesc').value=item.desc;document.getElementById('miniHFile').value='';const preview=document.getElementById('miniHFilePreview');preview.innerHTML='';if(currentFile){if(currentFile.type.startsWith('image')){preview.innerHTML='<img src="'+currentFile.data+'" class="preview-img" style="max-width:100%;max-height:100px">';}else{preview.innerHTML='<p style="font-size:11px">📄 '+currentFile.name+' (PDF)</p>';}}document.getElementById('miniHFile').addEventListener('change',e=>handleFileInput(e,'miniHFilePreview'));document.getElementById('miniHModal').classList.add('active');}
+function saveMiniHItem(){const title=document.getElementById('miniHTitle').value.trim();const desc=document.getElementById('miniHDesc').value.trim();if(!title){notify('Titre obligatoire','error');return;}let items=getMiniH();if(editingId){items=items.map(i=>i.id==editingId?{id:i.id,title,desc,file:currentFile}:i);}else{items.push({id:Date.now(),title,desc,file:currentFile});}setMiniH(items);closeModal('miniHModal');renderMiniH();notify('Mini Héron mise à jour');}
+
+// Projets Sportif
+function renderProjets(){const list=document.getElementById('projetsList');const items=getProjets();list.innerHTML='';items.forEach(item=>{const div=document.createElement('div');div.className='card';let content='<h3>'+item.title+'</h3><p>'+item.desc+'</p>';if(item.file){if(item.file.type.startsWith('image')){content+='<img src="'+item.file.data+'" class="card-img" />';}else{content+='<p style="font-size:11px">📄 PDF</p>';}}div.innerHTML=content;const actions=document.createElement('div');actions.className='card-actions';if(canEdit()){const be=document.createElement('button');be.className='btn btn-edit btn-sm';be.textContent='Modifier';be.onclick=()=>editProjetsItem(item);actions.appendChild(be);const bd=document.createElement('button');bd.className='btn btn-del btn-sm';bd.textContent='Supprimer';bd.onclick=()=>{if(confirm('Confirmer?')){setProjets(getProjets().filter(x=>x.id!==item.id));renderProjets();notify('Supprimé');}};actions.appendChild(bd);}div.appendChild(actions);list.appendChild(div);});document.getElementById('btnAddProjets').style.display=canEdit()?'block':'none';}
+function openProjetsModal(){editingId=null;currentFile=null;document.getElementById('projetsTitle').value='';document.getElementById('projetsDesc').value='';document.getElementById('projetsFile').value='';document.getElementById('projetsFilePreview').innerHTML='';document.getElementById('projetsFile').addEventListener('change',e=>handleFileInput(e,'projetsFilePreview'));document.getElementById('projetsModal').classList.add('active');}
+function editProjetsItem(item){editingId=item.id;currentFile=item.file||null;document.getElementById('projetsTitle').value=item.title;document.getElementById('projetsDesc').value=item.desc;document.getElementById('projetsFile').value='';const preview=document.getElementById('projetsFilePreview');preview.innerHTML='';if(currentFile){if(currentFile.type.startsWith('image')){preview.innerHTML='<img src="'+currentFile.data+'" class="preview-img" style="max-width:100%;max-height:100px">';}else{preview.innerHTML='<p style="font-size:11px">📄 '+currentFile.name+' (PDF)</p>';}}document.getElementById('projetsFile').addEventListener('change',e=>handleFileInput(e,'projetsFilePreview'));document.getElementById('projetsModal').classList.add('active');}
+function saveProjetsItem(){const title=document.getElementById('projetsTitle').value.trim();const desc=document.getElementById('projetsDesc').value.trim();if(!title){notify('Titre obligatoire','error');return;}let items=getProjets();if(editingId){items=items.map(i=>i.id==editingId?{id:i.id,title,desc,file:currentFile}:i);}else{items.push({id:Date.now(),title,desc,file:currentFile});}setProjets(items);closeModal('projetsModal');renderProjets();notify('Projet enregistré');}
+
+// Week ends
+function renderWeekends(){const list=document.getElementById('weekendsList');const items=getWeekends();list.innerHTML='';items.forEach(item=>{const div=document.createElement('div');div.className='card';let content='<h3>'+item.title+'</h3><p>'+item.desc+'</p>';if(item.file){if(item.file.type.startsWith('image')){content+='<img src="'+item.file.data+'" class="card-img" />';}else{content+='<p style="font-size:11px">📄 PDF</p>';}}div.innerHTML=content;const actions=document.createElement('div');actions.className='card-actions';if(canEdit()){const be=document.createElement('button');be.className='btn btn-edit btn-sm';be.textContent='Modifier';be.onclick=()=>editWeekendsItem(item);actions.appendChild(be);const bd=document.createElement('button');bd.className='btn btn-del btn-sm';bd.textContent='Supprimer';bd.onclick=()=>{if(confirm('Confirmer?')){setWeekends(getWeekends().filter(x=>x.id!==item.id));renderWeekends();notify('Supprimé');}};actions.appendChild(bd);}div.appendChild(actions);list.appendChild(div);});document.getElementById('btnAddWeekend').style.display=canEdit()?'block':'none';}
+function openWeekendsModal(){editingId=null;currentFile=null;document.getElementById('weekendsTitle').value='';document.getElementById('weekendsDesc').value='';document.getElementById('weekendsFile').value='';document.getElementById('weekendsFilePreview').innerHTML='';document.getElementById('weekendsFile').addEventListener('change',e=>handleFileInput(e,'weekendsFilePreview'));document.getElementById('weekendsModal').classList.add('active');}
+function editWeekendsItem(item){editingId=item.id;currentFile=item.file||null;document.getElementById('weekendsTitle').value=item.title;document.getElementById('weekendsDesc').value=item.desc;document.getElementById('weekendsFile').value='';const preview=document.getElementById('weekendsFilePreview');preview.innerHTML='';if(currentFile){if(currentFile.type.startsWith('image')){preview.innerHTML='<img src="'+currentFile.data+'" class="preview-img" style="max-width:100%;max-height:100px">';}else{preview.innerHTML='<p style="font-size:11px">📄 '+currentFile.name+' (PDF)</p>';}}document.getElementById('weekendsFile').addEventListener('change',e=>handleFileInput(e,'weekendsFilePreview'));document.getElementById('weekendsModal').classList.add('active');}
+function saveWeekendsItem(){const title=document.getElementById('weekendsTitle').value.trim();const desc=document.getElementById('weekendsDesc').value.trim();if(!title){notify('Titre obligatoire','error');return;}let items=getWeekends();if(editingId){items=items.map(i=>i.id==editingId?{id:i.id,title,desc,file:currentFile}:i);}else{items.push({id:Date.now(),title,desc,file:currentFile});}setWeekends(items);closeModal('weekendsModal');renderWeekends();notify('Week end enregistré');}
+
+// Exercices
+function renderExercices(){checkStorageWarning();const list=document.getElementById('exoList');const search=document.getElementById('exoSearch').value.toLowerCase();const themeFilter=document.getElementById('exoThemeFilter').value;const exos=getExos();const themes=[...new Set(exos.map(e=>e.theme))];const sel=document.getElementById('exoThemeFilter');sel.innerHTML='<option value="">Tous</option>'+themes.map(t=>'<option value="'+t+'">'+t+'</option>').join('');list.innerHTML='';exos.filter(e=>(!search||e.name.toLowerCase().includes(search))&&(!themeFilter||e.theme===themeFilter)).forEach(e=>{const div=document.createElement('div');div.className='card';let content='<h3>'+e.name+'</h3><p><strong>Thème:</strong> '+e.theme+'</p><p>'+e.desc+'</p>';if(e.file){if(e.file.type.startsWith('image')){content+='<img src="'+e.file.data+'" class="card-img" />';}else{content+='<p style="font-size:11px">📄 PDF</p>';}}div.innerHTML=content;const actions=document.createElement('div');actions.className='card-actions';if(canEdit()){const be=document.createElement('button');be.className='btn btn-edit btn-sm';be.textContent='Modifier';be.onclick=()=>openExoModal(e);actions.appendChild(be);const bd=document.createElement('button');bd.className='btn btn-del btn-sm';bd.textContent='Supprimer';bd.onclick=()=>{if(confirm('Confirmer?')){setExos(getExos().filter(x=>x.id!==e.id));renderExercices();notify('Supprimé');}};actions.appendChild(bd);}div.appendChild(actions);list.appendChild(div);});document.getElementById('btnAddExo').style.display=canEdit()?'block':'none';}
+function openExoModal(exo){editingId=exo?exo.id:null;currentFile=exo&&exo.file?exo.file:null;document.getElementById('exoName').value=exo?exo.name:'';document.getElementById('exoTheme').value=exo?exo.theme:'';document.getElementById('exoDesc').value=exo?exo.desc:'';document.getElementById('exoFile').value='';const preview=document.getElementById('exoFilePreview');preview.innerHTML='';if(currentFile){if(currentFile.type.startsWith('image')){preview.innerHTML='<img src="'+currentFile.data+'" class="preview-img" style="max-width:100%;max-height:100px">';}else{preview.innerHTML='<p style="font-size:11px">📄 '+currentFile.name+' (PDF)</p>';}}document.getElementById('exoFile').addEventListener('change',e=>handleFileInput(e,'exoFilePreview'));document.getElementById('exoModal').classList.add('active');}
+function saveExo(){const name=document.getElementById('exoName').value.trim();const theme=document.getElementById('exoTheme').value.trim();const desc=document.getElementById('exoDesc').value.trim();if(!name||!theme){notify('Nom et thème obligatoires','error');return;}let exos=getExos();if(editingId){exos=exos.map(e=>e.id==editingId?{id:e.id,name,theme,desc,file:currentFile}:e);}else{exos.push({id:Date.now(),name,theme,desc,file:currentFile});}setExos(exos);closeModal('exoModal');renderExercices();notify('Exercice enregistré');}
+
+// Lexique
+function renderLexique(){const list=document.getElementById('lexList');const search=document.getElementById('lexSearch').value.toLowerCase();const items=getLex().filter(l=>!search||l.term.toLowerCase().includes(search));list.innerHTML='';items.forEach(l=>{const div=document.createElement('div');div.className='card';let content='<h3>'+l.term+'</h3><p>'+l.def+'</p>';if(l.file){if(l.file.type.startsWith('image')){content+='<img src="'+l.file.data+'" class="card-img" />';}else{content+='<p style="font-size:11px">📄 PDF</p>';}}div.innerHTML=content;const actions=document.createElement('div');actions.className='card-actions';if(canEdit()){const be=document.createElement('button');be.className='btn btn-edit btn-sm';be.textContent='Modifier';be.onclick=()=>openLexModal(l);actions.appendChild(be);const bd=document.createElement('button');bd.className='btn btn-del btn-sm';bd.textContent='Supprimer';bd.onclick=()=>{if(confirm('Confirmer?')){setLex(getLex().filter(x=>x.id!==l.id));renderLexique();notify('Supprimé');}};actions.appendChild(bd);}div.appendChild(actions);list.appendChild(div);});document.getElementById('btnAddLex').style.display=canEdit()?'block':'none';}
+function openLexModal(item){editingId=item?item.id:null;currentFile=item&&item.file?item.file:null;document.getElementById('lexTerm').value=item?item.term:'';document.getElementById('lexDef').value=item?item.def:'';document.getElementById('lexFile').value='';const preview=document.getElementById('lexFilePreview');preview.innerHTML='';if(currentFile){if(currentFile.type.startsWith('image')){preview.innerHTML='<img src="'+currentFile.data+'" class="preview-img" style="max-width:100%;max-height:100px">';}else{preview.innerHTML='<p style="font-size:11px">📄 '+currentFile.name+' (PDF)</p>';}}document.getElementById('lexFile').addEventListener('change',e=>handleFileInput(e,'lexFilePreview'));document.getElementById('lexModal').classList.add('active');}
+function saveLex(){const term=document.getElementById('lexTerm').value.trim();const def=document.getElementById('lexDef').value.trim();if(!term){notify('Terme obligatoire','error');return;}let items=getLex();if(editingId){items=items.map(l=>l.id==editingId?{id:l.id,term,def,file:currentFile}:l);}else{items.push({id:Date.now(),term,def,file:currentFile});}setLex(items);closeModal('lexModal');renderLexique();notify('Terme enregistré');}
+
+// Conventions
+function renderConventions(){const list=document.getElementById('convList');const items=getConv();list.innerHTML='';items.forEach(item=>{const div=document.createElement('div');div.className='card';let content='<h3>'+item.title+'</h3><p>'+item.content.substring(0,80)+(item.content.length>80?'...':'')+'</p>';if(item.file){if(item.file.type.startsWith('image')){content+='<img src="'+item.file.data+'" class="card-img" />';}else{content+='<p style="font-size:11px">📄 PDF</p>';}}div.innerHTML=content;const actions=document.createElement('div');actions.className='card-actions';if(canEdit()){const be=document.createElement('button');be.className='btn btn-edit btn-sm';be.textContent='Modifier';be.onclick=()=>openConvModal(item);actions.appendChild(be);const bd=document.createElement('button');bd.className='btn btn-del btn-sm';bd.textContent='Supprimer';bd.onclick=()=>{if(confirm('Confirmer?')){setConv(getConv().filter(x=>x.id!==item.id));renderConventions();notify('Supprimé');}};actions.appendChild(bd);}div.appendChild(actions);list.appendChild(div);});document.getElementById('btnAddConv').style.display=canEdit()?'block':'none';}
+function openConvModal(item){editingId=item?item.id:null;currentFile=item&&item.file?item.file:null;document.getElementById('convTitle').value=item?item.title:'';document.getElementById('convContent').value=item?item.content:'';document.getElementById('convFile').value='';const preview=document.getElementById('convFilePreview');preview.innerHTML='';if(currentFile){if(currentFile.type.startsWith('image')){preview.innerHTML='<img src="'+currentFile.data+'" class="preview-img" style="max-width:100%;max-height:100px">';}else{preview.innerHTML='<p style="font-size:11px">📄 '+currentFile.name+' (PDF)</p>';}}document.getElementById('convFile').addEventListener('change',e=>handleFileInput(e,'convFilePreview'));document.getElementById('convModal').classList.add('active');}
+function saveConv(){const title=document.getElementById('convTitle').value.trim();const content=document.getElementById('convContent').value.trim();if(!title){notify('Titre obligatoire','error');return;}let items=getConv();if(editingId){items=items.map(c=>c.id==editingId?{id:c.id,title,content,file:currentFile}:c);}else{items.push({id:Date.now(),title,content,file:currentFile});}setConv(items);closeModal('convModal');renderConventions();notify('Convention enregistrée');}
+
+// Contacts
+function renderContacts(){const list=document.getElementById('contactList');const items=getContact();list.innerHTML='';items.forEach(item=>{const div=document.createElement('div');div.className='card';div.innerHTML='<h3>'+item.name+'</h3><p><strong>'+item.role+'</strong></p><p>'+item.info+'</p>';const actions=document.createElement('div');actions.className='card-actions';if(canEdit()){const be=document.createElement('button');be.className='btn btn-edit btn-sm';be.textContent='Modifier';be.onclick=()=>openContactModal(item);actions.appendChild(be);const bd=document.createElement('button');bd.className='btn btn-del btn-sm';bd.textContent='Supprimer';bd.onclick=()=>{if(confirm('Confirmer?')){setContact(getContact().filter(x=>x.id!==item.id));renderContacts();notify('Supprimé');}};actions.appendChild(bd);}div.appendChild(actions);list.appendChild(div);});document.getElementById('btnAddContact').style.display=canEdit()?'block':'none';}
+function openContactModal(item){editingId=item?item.id:null;document.getElementById('contactName').value=item?item.name:'';document.getElementById('contactRole').value=item?item.role:'';document.getElementById('contactInfo').value=item?item.info:'';document.getElementById('contactModal').classList.add('active');}
+function saveContact(){const name=document.getElementById('contactName').value.trim();const role=document.getElementById('contactRole').value.trim();const info=document.getElementById('contactInfo').value.trim();if(!name){notify('Nom obligatoire','error');return;}let items=getContact();if(editingId){items=items.map(c=>c.id==editingId?{id:c.id,name,role,info}:c);}else{items.push({id:Date.now(),name,role,info});}setContact(items);closeModal('contactModal');renderContacts();notify('Contact enregistré');}
+
+// Infrastructures
+function renderInfra(){const list=document.getElementById('infraList');const items=getInfra();list.innerHTML='';items.forEach(item=>{const div=document.createElement('div');div.className='card';let content='<h3>'+item.name+'</h3><p><strong>Description:</strong> '+item.desc+'</p><p><strong>Matériel:</strong> '+item.equip+'</p><p><strong>Code clé:</strong> '+item.code+'</p>';if(item.file){if(item.file.type.startsWith('image')){content+='<img src="'+item.file.data+'" class="card-img" />';}else{content+='<p style="font-size:11px">📄 PDF</p>';}}div.innerHTML=content;const actions=document.createElement('div');actions.className='card-actions';if(canEdit()){const be=document.createElement('button');be.className='btn btn-edit btn-sm';be.textContent='Modifier';be.onclick=()=>openInfraModal(item);actions.appendChild(be);const bd=document.createElement('button');bd.className='btn btn-del btn-sm';bd.textContent='Supprimer';bd.onclick=()=>{if(confirm('Confirmer?')){setInfra(getInfra().filter(x=>x.id!==item.id));renderInfra();notify('Supprimé');}};actions.appendChild(bd);}div.appendChild(actions);list.appendChild(div);});document.getElementById('btnAddInfra').style.display=canEdit()?'block':'none';}
+function openInfraModal(item){editingId=item?item.id:null;currentFile=item&&item.file?item.file:null;document.getElementById('infraName').value=item?item.name:'';document.getElementById('infraDesc').value=item?item.desc:'';document.getElementById('infraEquip').value=item?item.equip:'';document.getElementById('infraCode').value=item?item.code:'';document.getElementById('infraFile').value='';const preview=document.getElementById('infraFilePreview');preview.innerHTML='';if(currentFile){if(currentFile.type.startsWith('image')){preview.innerHTML='<img src="'+currentFile.data+'" class="preview-img" style="max-width:100%;max-height:100px">';}else{preview.innerHTML='<p style="font-size:11px">📄 '+currentFile.name+' (PDF)</p>';}}document.getElementById('infraFile').addEventListener('change',e=>handleFileInput(e,'infraFilePreview'));document.getElementById('infraModal').classList.add('active');}
+function saveInfra(){const name=document.getElementById('infraName').value.trim();const desc=document.getElementById('infraDesc').value.trim();const equip=document.getElementById('infraEquip').value.trim();const code=document.getElementById('infraCode').value.trim();if(!name){notify('Nom obligatoire','error');return;}let items=getInfra();if(editingId){items=items.map(i=>i.id==editingId?{id:i.id,name,desc,equip,code,file:currentFile}:i);}else{items.push({id:Date.now(),name,desc,equip,code,file:currentFile});}setInfra(items);closeModal('infraModal');renderInfra();notify('Infrastructure enregistrée');}
+
+// Admin
+function renderAdmin(){if(!currentUser||currentUser.role!=='admin')return;const pending=getPending();const pt=document.getElementById('pendingTable');if(!pending.length){pt.innerHTML='<tr><td colspan="3">Aucune demande</td></tr>';}else{pt.innerHTML='<tr><th>Nom</th><th>Email</th><th>Action</th></tr>'+pending.map(p=>'<tr><td>'+p.name+'</td><td style="font-size:11px">'+p.email+'</td><td><button class="btn btn-edit btn-sm" onclick="approve('+p.id+')">Valider</button></td></tr>').join('');}const users=getUsers();const ut=document.getElementById('usersTable');ut.innerHTML='<tr><th>Nom</th><th>Rôle</th><th>Action</th></tr>'+users.filter(u=>u.email!=='admin@esbva.fr').map(u=>'<tr><td>'+u.name+'</td><td>'+u.role+'</td><td>'+(u.role==='coach'?'<button class="btn btn-promote btn-sm" onclick="promote('+u.id+')">Admin</button>':'<button class="btn btn-del btn-sm" onclick="demote('+u.id+')">Coach</button>')+'</td></tr>').join('');}
+function approve(id){const pending=getPending();const p=pending.find(x=>x.id===id);if(!p)return;let users=getUsers();users.push({id:Date.now(),name:p.name,email:p.email,password:p.password,role:'coach'});setUsers(users);setPending(pending.filter(x=>x.id!==id));renderAdmin();notify('Coach validé');}
+function promote(id){let users=getUsers();users=users.map(u=>u.id==id?{...u,role:'admin'}:u);setUsers(users);renderAdmin();notify('Promu en administrateur');}
+function demote(id){let users=getUsers();users=users.map(u=>u.id==id?{...u,role:'coach'}:u);setUsers(users);renderAdmin();notify('Rétrogradé en coach');}
+
+function renderAll(){renderExercices();renderLexique();renderConventions();renderContacts();renderInfra();renderMiniG();renderMiniH();renderProjets();renderWeekends();}
+
+loadData();
+</script>
+</body>
+</html>
